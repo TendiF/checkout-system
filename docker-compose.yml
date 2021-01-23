@@ -1,0 +1,54 @@
+version: "3"
+services:
+  api:
+    env_file:
+      - .env
+    build: images/node
+    image: ho_node:latest
+    container_name: api
+    depends_on:
+      - database
+    working_dir: /home/node/app
+    volumes:
+      - ./api:/home/node/app
+      - ./api/migrations:/home/node/app/migrations
+      - ./api/seeders:/home/node/app/seeders
+    command: ${API_NODE_COMMAND}
+    ports:
+      - ${API_PORT}:3000
+    links:
+      - database
+    networks:
+      - app-network
+  database:
+    image: mysql:5.7
+    container_name: db
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Jakarta
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./mysql-dump:/home/dump
+    networks:
+      - app-network
+    tty: true
+  adminer:
+    image: adminer
+    container_name: adminer
+    restart: always
+    ports:
+      - ${ADMINER_PORT}:8080
+    links:
+      - database
+    networks:
+      - app-network
+    tty: true
+volumes:
+    node_modules: {}
+    data:
+      driver: local
+networks:
+  app-network:
+    driver: bridge
